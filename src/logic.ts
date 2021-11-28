@@ -1,3 +1,4 @@
+import { reject } from "ramda";
 import {
   InfoResponse,
   GameState,
@@ -7,6 +8,16 @@ import {
   Direction,
   Battlesnake,
 } from "./types";
+import {
+  contains,
+  getSnakeDirection,
+  moveDir,
+  removeDirection,
+  removeDown,
+  removeLeft,
+  removeRight,
+  removeUp,
+} from "./utils";
 
 export function info(): InfoResponse {
   console.log("INFO");
@@ -27,44 +38,6 @@ export function start(gameState: GameState): void {
 export function end(gameState: GameState): void {
   console.log(`${gameState.game.id} END\n`);
 }
-
-const notRight = (dir: Direction) => dir !== "right";
-const notUp = (dir: Direction) => dir !== "up";
-const notDown = (dir: Direction) => dir !== "down";
-const notLeft = (dir: Direction) => dir !== "left";
-
-const oppositeDirection = (dir: Direction): Direction => {
-  switch (dir) {
-    case "up":
-      return "down";
-    case "down":
-      return "up";
-    case "right":
-      return "left";
-    case "left":
-      return "right";
-  }
-};
-
-const hasDirection = (
-  possibleMoves: Direction[],
-  direction: Direction
-): boolean => {
-  return !!possibleMoves.find((dir) => dir === direction);
-};
-
-const moveDir = (startPos: Coord, direction: Direction): Coord => {
-  switch (direction) {
-    case "up":
-      return { ...startPos, y: startPos.y + 1 };
-    case "down":
-      return { ...startPos, y: startPos.y - 1 };
-    case "right":
-      return { ...startPos, x: startPos.x + 1 };
-    case "left":
-      return { ...startPos, x: startPos.x - 1 };
-  }
-};
 
 const containsSnake = (pos: Coord, gameState: GameState): boolean => {
   const dangerousSpots: Coord[] = gameState.board.snakes.flatMap(
@@ -182,9 +155,6 @@ const scoreDirection = (
       }
     }
   }
-  // const positionsInsideBoard = positions.filter(
-  //   (pos) => !outsideBoard(pos, gameState)
-  // );
   const scores: number[] = positions.map((pos) => {
     if (containsSnake(pos, gameState)) {
       return snakeScore;
@@ -192,9 +162,6 @@ const scoreDirection = (
     if (containsFood(pos, gameState)) {
       return foodScore;
     }
-    // if (outsideBoard(pos, gameState)) {
-    //   return outsideScore;
-    // }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
       return 100 - foodDist;
@@ -202,28 +169,6 @@ const scoreDirection = (
     return 0;
   });
   return scores.reduce((acc, num) => acc + num, 0);
-};
-
-const getSnakeDirection = (snake: Battlesnake): Direction => {
-  const neck = snake.body[1];
-  const head = snake.head;
-  if (head.y > neck.y) {
-    return "up";
-  }
-  if (head.y < neck.y) {
-    return "down";
-  }
-  if (head.x > neck.x) {
-    return "right";
-  }
-  return "left";
-};
-
-const arrayMax = <T>(arr: T[], extractor: (arg: T) => number): number => {
-  return arr.reduce((p, v) => {
-    const value = extractor(v);
-    return p > value ? p : value;
-  }, -Infinity);
 };
 
 const getPossibleMoves = (gameState: GameState): Direction[] => {
@@ -237,36 +182,33 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
   const myNeck = gameState.you.body[1];
   const isHungry = gameState.you.health <= 100;
   if (myNeck.x < myHead.x) {
-    possibleMoves = possibleMoves.filter(notLeft);
+    possibleMoves = removeLeft(possibleMoves);
   } else if (myNeck.x > myHead.x) {
-    possibleMoves = possibleMoves.filter(notRight);
+    possibleMoves = removeRight(possibleMoves);
   } else if (myNeck.y < myHead.y) {
-    possibleMoves = possibleMoves.filter(notDown);
+    possibleMoves = removeDown(possibleMoves);
   } else if (myNeck.y > myHead.y) {
-    possibleMoves = possibleMoves.filter(notUp);
+    possibleMoves = removeUp(possibleMoves);
   }
 
   if (myHead.x === 0) {
-    possibleMoves = possibleMoves.filter(notLeft);
+    possibleMoves = removeLeft(possibleMoves);
   }
   if (myHead.x === boardWidth) {
-    possibleMoves = possibleMoves.filter(notRight);
+    possibleMoves = removeRight(possibleMoves);
   }
   if (myHead.y === 0) {
-    possibleMoves = possibleMoves.filter(notDown);
+    possibleMoves = removeDown(possibleMoves);
   }
   if (myHead.y === boardHeight) {
-    possibleMoves = possibleMoves.filter(notUp);
+    possibleMoves = removeLeft(possibleMoves);
   }
 
   // get position the move would place us at, if that is in a snake, remove the direction
   possibleMoves.forEach((dir) => {
     const posAfterMove = moveDir(myHead, dir);
     if (containsSnake(posAfterMove, gameState)) {
-      possibleMoves = possibleMoves.filter((move) => move !== dir);
-      // if (hasDirection(possibleMoves, oppositeDirection(dir))) {
-      //   possibleMoves = [...possibleMoves, oppositeDirection(dir)];
-      // }
+      possibleMoves = removeDirection(dir)(possibleMoves);
     }
   });
   // Avoid going in front of other snakes
@@ -285,7 +227,7 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
       ) &&
       possibleMoves.length > 1
     ) {
-      possibleMoves = possibleMoves.filter((move) => move !== dir);
+      possibleMoves = removeDirection(dir)(possibleMoves);
     }
   });
 
@@ -297,7 +239,7 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
       !isHungry &&
       possibleMoves.length > 1
     ) {
-      possibleMoves = possibleMoves.filter((move) => move !== dir);
+      possibleMoves = removeDirection(dir)(possibleMoves);
     }
   });
 
@@ -319,59 +261,31 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
   }
 
   // Pad choices with desirable choices
-  if (myHead.x < 2 && hasDirection(possibleMoves, "right")) {
+  if (myHead.x < 2 && contains(possibleMoves, "right")) {
     possibleMoves = [...possibleMoves, "right"];
   }
-  if (myHead.x > boardWidth - 2 && hasDirection(possibleMoves, "left")) {
+  if (myHead.x > boardWidth - 2 && contains(possibleMoves, "left")) {
     possibleMoves = [...possibleMoves, "left"];
   }
-  if (myHead.y < 2 && hasDirection(possibleMoves, "up")) {
+  if (myHead.y < 2 && contains(possibleMoves, "up")) {
     possibleMoves = [...possibleMoves, "up"];
   }
-  if (myHead.y > boardHeight - 2 && hasDirection(possibleMoves, "down")) {
+  if (myHead.y > boardHeight - 2 && contains(possibleMoves, "down")) {
     possibleMoves = [...possibleMoves, "down"];
   }
 
   return possibleMoves;
 };
 
-const pickMove = (
-  gameState: GameState,
-  possibleMoves: Direction[]
-): Direction => {
-  // const ffScores = possibleMoves.map((dir) => ({
-  //   floodFillScore: floodFill(moveDir(gameState.you.head, dir), gameState),
-  //   dir,
-  // }));
-  // return ffScores.reduce<{ floodFillScore: number; dir: Direction }>(
-  //   (acc, v) => (v.floodFillScore > acc.floodFillScore ? v : acc),
-  //   { floodFillScore: -1, dir: "up" }
-  // ).dir;
+const pickMove = (possibleMoves: Direction[]): Direction => {
   return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
 };
 
 export function move(gameState: GameState): MoveResponse {
   const safeMoves = getPossibleMoves(gameState);
 
-  // TODO: Step 1 - Don't hit walls.
-  // Use information in gameState to prevent your Battlesnake from moving beyond the boundaries of the board.
-  // const boardWidth = gameState.board.width
-  // const boardHeight = gameState.board.height
-
-  // TODO: Step 2 - Don't hit yourself.
-  // Use information in gameState to prevent your Battlesnake from colliding with itself.
-  // const mybody = gameState.you.body
-
-  // TODO: Step 3 - Don't collide with others.
-  // Use information in gameState to prevent your Battlesnake from colliding with others.
-
-  // TODO: Step 4 - Find food.
-  // Use information in gameState to seek out and find food.
-
-  // Finally, choose a move from the available safe moves.
-  // TODO: Step 5 - Select a move to make based on strategy, rather than random.
   const response: MoveResponse = {
-    move: pickMove(gameState, safeMoves),
+    move: pickMove(safeMoves),
   };
 
   console.log(`${gameState.game.id} MOVE ${gameState.turn}: ${response.move}`);
