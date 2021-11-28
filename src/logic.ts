@@ -291,6 +291,8 @@ export function move(gameState: GameState): MoveResponse {
     move: bestMove,
   };
 
-  console.log(`${gameState.game.id} MOVE ${gameState.turn}: ${response.move}`);
+  console.log(
+    `${gameState.game.id}:${gameState.you.id} MOVE ${gameState.turn}: ${response.move}`
+  );
   return response;
 }
