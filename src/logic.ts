@@ -168,24 +168,29 @@ const scoreDirection = (
   return scores.reduce((acc, num) => acc + num, 0);
 };
 
-const getPossibleMoves = (gameState: GameState): Direction[] => {
+const getBestMove = (gameState: GameState): Direction => {
   let possibleMoves: Direction[] = ["up", "down", "left", "right"];
 
   const boardWidth = gameState.board.width - 1;
   const boardHeight = gameState.board.height - 1;
 
   // Step 0: Don't let your Battlesnake move back on it's own neck
-  const myHead = gameState.you.head;
-  const myNeck = gameState.you.body[1];
-  const isHungry = gameState.you.health <= 100;
-  if (myNeck.x < myHead.x) {
-    possibleMoves = removeLeft(possibleMoves);
-  } else if (myNeck.x > myHead.x) {
-    possibleMoves = removeRight(possibleMoves);
-  } else if (myNeck.y < myHead.y) {
-    possibleMoves = removeDown(possibleMoves);
-  } else if (myNeck.y > myHead.y) {
-    possibleMoves = removeUp(possibleMoves);
+  const me = gameState.you;
+  const myHead = me.head;
+  const isHungry = me.health <= 100;
+  switch (getSnakeDirection(me)) {
+    case "up":
+      possibleMoves = removeDown(possibleMoves);
+      break;
+    case "down":
+      possibleMoves = removeUp(possibleMoves);
+      break;
+    case "right":
+      possibleMoves = removeLeft(possibleMoves);
+      break;
+    case "left":
+      possibleMoves = removeRight(possibleMoves);
+      break;
   }
 
   if (myHead.x === 0) {
@@ -198,7 +203,7 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
     possibleMoves = removeDown(possibleMoves);
   }
   if (myHead.y === boardHeight) {
-    possibleMoves = removeLeft(possibleMoves);
+    possibleMoves = removeUp(possibleMoves);
   }
 
   // get position the move would place us at, if that is in a snake, remove the direction
@@ -244,45 +249,30 @@ const getPossibleMoves = (gameState: GameState): Direction[] => {
     .map((dir) => {
       const score = scoreDirection(myHead, dir, gameState);
       const floodFillScore = floodFill(moveDir(myHead, dir), gameState);
-      return { dir, score, floodFillScore };
+      return {
+        dir,
+        score,
+        floodFillScore,
+        combinedScore: score + floodFillScore,
+      };
     })
-    .sort((a, b) => b.floodFillScore + b.score - (a.floodFillScore + a.score));
+    .sort((a, b) => b.combinedScore - a.combinedScore);
 
   console.log(scores);
 
   const bestScore = scores[0];
-  const bestDirection = scores.find((i) => i.score === bestScore.score);
+  const choices = scores
+    .filter((i) => i.combinedScore === bestScore.combinedScore)
+    .sort((a, b) => b.floodFillScore - a.floodFillScore);
 
-  if (bestDirection) {
-    possibleMoves = possibleMoves.filter((dir) => dir === bestDirection.dir);
-  }
-
-  // Pad choices with desirable choices
-  if (myHead.x < 2 && contains(possibleMoves, "right")) {
-    possibleMoves = [...possibleMoves, "right"];
-  }
-  if (myHead.x > boardWidth - 2 && contains(possibleMoves, "left")) {
-    possibleMoves = [...possibleMoves, "left"];
-  }
-  if (myHead.y < 2 && contains(possibleMoves, "up")) {
-    possibleMoves = [...possibleMoves, "up"];
-  }
-  if (myHead.y > boardHeight - 2 && contains(possibleMoves, "down")) {
-    possibleMoves = [...possibleMoves, "down"];
-  }
-
-  return possibleMoves;
-};
-
-const pickMove = (possibleMoves: Direction[]): Direction => {
-  return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+  return choices[0].dir;
 };
 
 export function move(gameState: GameState): MoveResponse {
-  const safeMoves = getPossibleMoves(gameState);
+  const bestMove = getBestMove(gameState);
 
   const response: MoveResponse = {
-    move: pickMove(safeMoves),
+    move: bestMove,
   };
 
   console.log(`${gameState.game.id} MOVE ${gameState.turn}: ${response.move}`);
