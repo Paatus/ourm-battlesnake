@@ -153,19 +153,38 @@ const scoreDirection = (
     }
   }
   const scores: number[] = positions.map((pos) => {
+    let score = 0;
     if (containsSnake(pos, gameState)) {
-      return snakeScore;
+      score += snakeScore;
     }
     if (containsFood(pos, gameState)) {
-      return foodScore;
+      score += foodScore;
+    }
+    if (contains(getLikelyNextSnakePositions(pos, gameState), pos)) {
+      score -= -5;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
-      return 100 - foodDist;
+      const foodScore = 100 - foodDist;
+      score += foodScore;
     }
-    return 0;
+    return score;
   });
   return scores.reduce((acc, num) => acc + num, 0);
+};
+
+const getLikelyNextSnakePositions = (
+  myHead: Coord,
+  gameState: GameState
+): Coord[] => {
+  const snakeHeads: Coord[] = gameState.board.snakes
+    .filter((snake) => snake.id !== gameState.you.id)
+    .flatMap((snake) => snake.head);
+
+  const dangerousTiles: Coord[] = snakeHeads.flatMap((head) =>
+    getOpenNeighbours(head, [], gameState)
+  );
+  return dangerousTiles;
 };
 
 const getBestMove = (gameState: GameState): Direction => {
