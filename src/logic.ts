@@ -155,13 +155,13 @@ const scoreDirection = (
   const scores: number[] = positions.map((pos) => {
     let score = 0;
     if (containsSnake(pos, gameState)) {
-      score -= snakeScore;
+      score += snakeScore;
     }
     if (containsFood(pos, gameState)) {
       score += foodScore;
     }
     if (contains(getLikelyNextSnakePositions(gameState), pos)) {
-      score -= -5;
+      score += snakeScore;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
