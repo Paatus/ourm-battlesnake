@@ -21,9 +21,9 @@ export function info(): InfoResponse {
   const response: InfoResponse = {
     apiversion: "1",
     author: "",
-    color: "#888888",
-    head: "default",
-    tail: "default",
+    color: "#2bbfd6",
+    head: "beluga",
+    tail: "fat-rattle",
   };
   return response;
 }
