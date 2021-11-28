@@ -1,12 +1,9 @@
-import { reject } from "ramda";
 import {
   InfoResponse,
   GameState,
   MoveResponse,
-  Game,
   Coord,
   Direction,
-  Battlesnake,
 } from "./types";
 import {
   contains,
