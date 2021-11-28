@@ -155,12 +155,12 @@ const scoreDirection = (
   const scores: number[] = positions.map((pos) => {
     let score = 0;
     if (containsSnake(pos, gameState)) {
-      score += snakeScore;
+      score -= snakeScore;
     }
     if (containsFood(pos, gameState)) {
       score += foodScore;
     }
-    if (contains(getLikelyNextSnakePositions(pos, gameState), pos)) {
+    if (contains(getLikelyNextSnakePositions(gameState), pos)) {
       score -= -5;
     }
     if (needsFood) {
@@ -173,10 +173,7 @@ const scoreDirection = (
   return scores.reduce((acc, num) => acc + num, 0);
 };
 
-const getLikelyNextSnakePositions = (
-  myHead: Coord,
-  gameState: GameState
-): Coord[] => {
+const getLikelyNextSnakePositions = (gameState: GameState): Coord[] => {
   const snakeHeads: Coord[] = gameState.board.snakes
     .filter((snake) => snake.id !== gameState.you.id)
     .flatMap((snake) => snake.head);
