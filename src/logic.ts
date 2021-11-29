@@ -229,25 +229,6 @@ const getBestMove = (gameState: GameState): Direction => {
       possibleMoves = removeDirection(dir)(possibleMoves);
     }
   });
-  // Avoid going in front of other snakes
-  possibleMoves.forEach((dir) => {
-    const posAfterMove = moveDir(myHead, dir);
-    const dangerousTiles = gameState.board.snakes
-      .filter((snake) => snake.id !== gameState.you.id)
-      .flatMap((snake) => ({
-        head: snake.head,
-        direction: getSnakeDirection(snake),
-      }))
-      .flatMap((snakeInfo) => [moveDir(snakeInfo.head, snakeInfo.direction)]);
-    if (
-      dangerousTiles.find(
-        (t) => t.x === posAfterMove.x && t.y === posAfterMove.y
-      ) &&
-      possibleMoves.length > 1
-    ) {
-      possibleMoves = removeDirection(dir)(possibleMoves);
-    }
-  });
 
   // get position the move would place us at, if that is food, remove the direction, unless hungry
   possibleMoves.forEach((dir) => {
