@@ -120,7 +120,7 @@ export const floodFill = (pos: Coord, gameState: GameState): number => {
   return allNeighbours.length + 1;
 };
 
-const scoreDirection = (
+export const scoreDirection = (
   pos: Coord,
   direction: Direction,
   gameState: GameState
@@ -132,8 +132,8 @@ const scoreDirection = (
   // const outsideScore = -1;
   const snakeScore = -3;
 
-  let positions = [];
   const move = moveDir(pos, direction);
+  let positions = [move];
   for (let w = 0; w < 1; w++) {
     for (let l = 1; l <= distanceLength; l++) {
       switch (direction) {

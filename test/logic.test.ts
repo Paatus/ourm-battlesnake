@@ -1,7 +1,7 @@
-import { distanceToFood, floodFill, info, move } from "../src/logic";
-import { Battlesnake, Coord, GameState, MoveResponse } from "../src/types";
+import { distanceToFood, floodFill, info, scoreDirection } from "../src/logic";
+import { Battlesnake, Coord, GameState } from "../src/types";
 
-function createGameState(me: Battlesnake, food: Coord[]): GameState {
+function createGameState(me: Battlesnake, food: Coord[], snakes: Battlesnake[]): GameState {
   return {
     game: {
       id: "",
@@ -29,18 +29,18 @@ function createGameState(me: Battlesnake, food: Coord[]): GameState {
       height: 5,
       width: 5,
       food,
-      snakes: [me],
+      snakes,
       hazards: [],
     },
     you: me,
   };
 }
 
-function createBattlesnake(id: string, body: Coord[]): Battlesnake {
+function createBattlesnake(id: string, body: Coord[], health: number = 100): Battlesnake {
   return {
     id: id,
     name: id,
-    health: 0,
+    health,
     body: body,
     latency: "",
     head: body[0],
@@ -67,7 +67,7 @@ describe("Seek food", () => {
     const gameState = createGameState(me, [
       { x: 0, y: 0 },
       { x: 1, y: 0 },
-    ]);
+    ], [me]);
     expect(distanceToFood(me.head, gameState)).toEqual(1);
   });
 });
@@ -79,7 +79,7 @@ describe("Flood fill", () => {
       { x: 1, y: 1 },
       { x: 1, y: 0 },
     ]);
-    const gameState = createGameState(me, []);
+    const gameState = createGameState(me, [], [me]);
 
     expect(floodFill({ x: 0, y: 0 }, gameState)).toEqual(1);
   });
@@ -91,7 +91,7 @@ describe("Flood fill", () => {
       { x: 1, y: 1 },
       { x: 1, y: 0 },
     ]);
-    const gameState = createGameState(me, []);
+    const gameState = createGameState(me, [], [me]);
 
     expect(floodFill({ x: 0, y: 1 }, gameState)).toEqual(2);
   });
@@ -103,8 +103,23 @@ describe("Flood fill", () => {
       { x: 1, y: 1 },
       { x: 1, y: 0 },
     ]);
-    const gameState = createGameState(me, []);
+    const gameState = createGameState(me, [], [me]);
 
     expect(floodFill({ x: 0, y: 3 }, gameState)).toEqual(19);
   });
+});
+
+describe('Scores', () => {
+    it('Scores negatively for likely next position for other snakes', () => {
+        const me = createBattlesnake("me", [{ x: 2, y: 2 }, {x:2, y: 3}]);
+        const other = createBattlesnake("other", [{ x: 1, y: 1 }, {x:0, y: 1}]);
+        const gameState = createGameState(me, [], [me, other])
+
+        const downScore = scoreDirection(me.head, 'down', gameState);
+        const leftScore = scoreDirection(me.head, 'left', gameState);
+        const rightScore = scoreDirection(me.head, 'right', gameState);
+
+        expect(downScore).toBeLessThan(rightScore);
+        expect(leftScore).toBeLessThan(rightScore);
+    });
 });
