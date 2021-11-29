@@ -8,6 +8,7 @@ import {
 import {
   contains,
   getSnakeDirection,
+  map,
   moveDir,
   removeDirection,
   removeDown,
@@ -126,11 +127,10 @@ export const scoreDirection = (
   gameState: GameState
 ) => {
   const distanceLength = 2;
-  const healthMultiplier = gameState.you.health / 100;
   const needsFood = gameState.you.health <= 20;
-  const foodScore = Math.ceil(1 / healthMultiplier);
-  // const outsideScore = -1;
-  const snakeScore = -3;
+  const foodScore = map(gameState.you.health, 0, 100, 3, 0);
+  const snakeScore = -5;
+  const dangerousPositionScore = -3;
 
   const move = moveDir(pos, direction);
   let positions = [move];
@@ -154,19 +154,21 @@ export const scoreDirection = (
   }
   const scores: number[] = positions.map((pos) => {
     let score = 0;
-    if (containsSnake(pos, gameState)) {
+    const isSnake = containsSnake(pos, gameState);
+    const isDangerous = contains(getLikelyNextSnakePositions(gameState), pos)
+    const isFood = containsFood(pos, gameState);
+    if (isSnake) {
       score += snakeScore;
-    }
-    if (containsFood(pos, gameState)) {
+    } else if (isDangerous) {
+      score += dangerousPositionScore;
+    } else if (isFood && needsFood) {
       score += foodScore;
-    }
-    if (contains(getLikelyNextSnakePositions(gameState), pos)) {
-      score += snakeScore;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
-      const foodScore = 100 - foodDist;
-      score += foodScore;
+      const maxDist = distance({ x: 0, y: 0 }, { x: gameState.board.width - 1, y: gameState.board.height - 1 });
+      const foodDistanceScore = map(foodDist, 0, maxDist, 4, 0);
+      score += foodDistanceScore;
     }
     return score;
   });

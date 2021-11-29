@@ -39,3 +39,5 @@ export const moveDir = (startPos: Coord, direction: Direction): Coord => {
       return { ...startPos, x: startPos.x - 1 };
   }
 };
+
+export const map = (value: number, x1: number, y1: number, x2: number, y2: number):number => (value - x1) * (y2 - x2) / (y1 - x1) + x2;

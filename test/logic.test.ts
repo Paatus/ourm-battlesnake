@@ -122,4 +122,22 @@ describe('Scores', () => {
         expect(downScore).toBeLessThan(rightScore);
         expect(leftScore).toBeLessThan(rightScore);
     });
+
+    it('Food score is higher when lower health', () => {
+        for (let health = 10; health <= 100; health += 10) {
+            const me = createBattlesnake("me", [{ x: 2, y: 2 }, {x:2, y: 3}], health);
+            const gameState = createGameState(me, [{ x: 1, y: 2}], [me])
+
+            const foodScore = scoreDirection(me.head, 'left', gameState);
+            const nonFoodScore = scoreDirection(me.head, 'right', gameState);
+
+            if (health <= 20) {
+                expect(foodScore).toBeGreaterThan(nonFoodScore);
+            } else {
+                expect(foodScore).toEqual(nonFoodScore);
+            }
+        }
+
+
+    });
 });
