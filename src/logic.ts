@@ -8,6 +8,7 @@ import {
 import {
   contains,
   getSnakeDirection,
+  isOuterEdge,
   map,
   moveDir,
   removeDirection,
@@ -163,6 +164,9 @@ export const scoreDirection = (
       score += dangerousPositionScore;
     } else if (isFood) {
       score += foodScore;
+    }
+    if (isOuterEdge(pos, gameState)) {
+      score += -2;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);

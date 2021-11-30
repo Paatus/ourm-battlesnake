@@ -1,4 +1,4 @@
-import { Battlesnake, Coord, Direction } from "./types";
+import { Battlesnake, Coord, Direction, GameState } from "./types";
 import { equals, reject } from "ramda";
 
 export const getSnakeDirection = (snake: Battlesnake): Direction => {
@@ -40,4 +40,19 @@ export const moveDir = (startPos: Coord, direction: Direction): Coord => {
   }
 };
 
-export const map = (value: number, x1: number, y1: number, x2: number, y2: number):number => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
+export const map = (
+  value: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): number => ((value - x1) * (y2 - x2)) / (y1 - x1) + x2;
+
+export const isOuterEdge = (pos: Coord, gameState: GameState): boolean => {
+  return (
+    pos.x === 0 ||
+    pos.x === gameState.board.width - 1 ||
+    pos.y === 0 ||
+    pos.y === gameState.board.height - 1
+  );
+};
