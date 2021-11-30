@@ -39,8 +39,9 @@ export function end(gameState: GameState): void {
 }
 
 const containsSnake = (pos: Coord, gameState: GameState): boolean => {
-  const dangerousSpots: Coord[] = gameState.board.snakes.flatMap(
-    (snake) => snake.body
+  const dangerousSpots: Coord[] = gameState.board.snakes.flatMap((snake) =>
+    // remove tail from snakes body, as tail will be empty next turn
+    snake.body.slice(0, snake.length - 1)
   );
   return !!dangerousSpots.find((c) => c.x === pos.x && c.y === pos.y);
 };
@@ -160,9 +161,11 @@ export const scoreDirection = (
     const isFood = containsFood(pos, gameState);
     if (isSnake) {
       score += snakeScore;
-    } else if (isDangerous) {
+    }
+    if (isDangerous) {
       score += dangerousPositionScore;
-    } else if (isFood) {
+    }
+    if (isFood) {
       score += foodScore;
     }
     if (isOuterEdge(pos, gameState)) {
@@ -240,16 +243,16 @@ const getBestMove = (gameState: GameState): Direction => {
   });
 
   // get position the move would place us at, if that is food, remove the direction, unless hungry
-  possibleMoves.forEach((dir) => {
-    const posAfterMove = moveDir(myHead, dir);
-    if (
-      containsFood(posAfterMove, gameState) &&
-      !isHungry &&
-      possibleMoves.length > 1
-    ) {
-      possibleMoves = removeDirection(dir)(possibleMoves);
-    }
-  });
+  // possibleMoves.forEach((dir) => {
+  //   const posAfterMove = moveDir(myHead, dir);
+  //   if (
+  //     containsFood(posAfterMove, gameState) &&
+  //     !isHungry &&
+  //     possibleMoves.length > 1
+  //   ) {
+  //     possibleMoves = removeDirection(dir)(possibleMoves);
+  //   }
+  // });
 
   const scores = possibleMoves
     .map((dir) => {
