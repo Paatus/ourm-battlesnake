@@ -128,7 +128,7 @@ export const scoreDirection = (
 ) => {
   const distanceLength = 2;
   const needsFood = gameState.you.health <= 20;
-  const foodScore = map(gameState.you.health, 0, 100, 3, 0);
+  const foodScore = map(gameState.you.health, 0, 100, 3, -2);
   const snakeScore = -5;
   const dangerousPositionScore = -3;
 
@@ -155,18 +155,21 @@ export const scoreDirection = (
   const scores: number[] = positions.map((pos) => {
     let score = 0;
     const isSnake = containsSnake(pos, gameState);
-    const isDangerous = contains(getLikelyNextSnakePositions(gameState), pos)
+    const isDangerous = contains(getLikelyNextSnakePositions(gameState), pos);
     const isFood = containsFood(pos, gameState);
     if (isSnake) {
       score += snakeScore;
     } else if (isDangerous) {
       score += dangerousPositionScore;
-    } else if (isFood && needsFood) {
+    } else if (isFood) {
       score += foodScore;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
-      const maxDist = distance({ x: 0, y: 0 }, { x: gameState.board.width - 1, y: gameState.board.height - 1 });
+      const maxDist = distance(
+        { x: 0, y: 0 },
+        { x: gameState.board.width - 1, y: gameState.board.height - 1 }
+      );
       const foodDistanceScore = map(foodDist, 0, maxDist, 4, 0);
       score += foodDistanceScore;
     }

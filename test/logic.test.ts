@@ -1,7 +1,11 @@
 import { distanceToFood, floodFill, info, scoreDirection } from "../src/logic";
 import { Battlesnake, Coord, GameState } from "../src/types";
 
-function createGameState(me: Battlesnake, food: Coord[], snakes: Battlesnake[]): GameState {
+function createGameState(
+  me: Battlesnake,
+  food: Coord[],
+  snakes: Battlesnake[]
+): GameState {
   return {
     game: {
       id: "",
@@ -36,7 +40,11 @@ function createGameState(me: Battlesnake, food: Coord[], snakes: Battlesnake[]):
   };
 }
 
-function createBattlesnake(id: string, body: Coord[], health: number = 100): Battlesnake {
+function createBattlesnake(
+  id: string,
+  body: Coord[],
+  health: number = 100
+): Battlesnake {
   return {
     id: id,
     name: id,
@@ -64,10 +72,14 @@ describe("Seek food", () => {
       { x: 1, y: 0 },
       { x: 0, y: 0 },
     ]);
-    const gameState = createGameState(me, [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-    ], [me]);
+    const gameState = createGameState(
+      me,
+      [
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+      ],
+      [me]
+    );
     expect(distanceToFood(me.head, gameState)).toEqual(1);
   });
 });
@@ -109,35 +121,44 @@ describe("Flood fill", () => {
   });
 });
 
-describe('Scores', () => {
-    it('Scores negatively for likely next position for other snakes', () => {
-        const me = createBattlesnake("me", [{ x: 2, y: 2 }, {x:2, y: 3}]);
-        const other = createBattlesnake("other", [{ x: 1, y: 1 }, {x:0, y: 1}]);
-        const gameState = createGameState(me, [], [me, other])
+describe("Scores", () => {
+  it("Scores negatively for likely next position for other snakes", () => {
+    const me = createBattlesnake("me", [
+      { x: 2, y: 2 },
+      { x: 2, y: 3 },
+    ]);
+    const other = createBattlesnake("other", [
+      { x: 1, y: 1 },
+      { x: 0, y: 1 },
+    ]);
+    const gameState = createGameState(me, [], [me, other]);
 
-        const downScore = scoreDirection(me.head, 'down', gameState);
-        const leftScore = scoreDirection(me.head, 'left', gameState);
-        const rightScore = scoreDirection(me.head, 'right', gameState);
+    const downScore = scoreDirection(me.head, "down", gameState);
+    const leftScore = scoreDirection(me.head, "left", gameState);
+    const rightScore = scoreDirection(me.head, "right", gameState);
 
-        expect(downScore).toBeLessThan(rightScore);
-        expect(leftScore).toBeLessThan(rightScore);
-    });
+    expect(downScore).toBeLessThan(rightScore);
+    expect(leftScore).toBeLessThan(rightScore);
+  });
 
-    it('Food score is higher when lower health', () => {
-        for (let health = 10; health <= 100; health += 10) {
-            const me = createBattlesnake("me", [{ x: 2, y: 2 }, {x:2, y: 3}], health);
-            const gameState = createGameState(me, [{ x: 1, y: 2}], [me])
+  it("Food score is higher when lower health", () => {
+    for (let health = 10; health <= 100; health += 10) {
+      const me = createBattlesnake(
+        "me",
+        [
+          { x: 2, y: 2 },
+          { x: 2, y: 3 },
+        ],
+        health
+      );
+      const gameState = createGameState(me, [{ x: 1, y: 2 }], [me]);
 
-            const foodScore = scoreDirection(me.head, 'left', gameState);
-            const nonFoodScore = scoreDirection(me.head, 'right', gameState);
+      const foodScore = scoreDirection(me.head, "left", gameState);
+      const nonFoodScore = scoreDirection(me.head, "right", gameState);
 
-            if (health <= 20) {
-                expect(foodScore).toBeGreaterThan(nonFoodScore);
-            } else {
-                expect(foodScore).toEqual(nonFoodScore);
-            }
-        }
-
-
-    });
+      if (health <= 20) {
+        expect(foodScore).toBeGreaterThan(nonFoodScore);
+      }
+    }
+  });
 });
