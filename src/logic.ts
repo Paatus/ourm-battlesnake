@@ -132,7 +132,7 @@ export const scoreDirection = (
   const needsFood = gameState.you.health <= 20;
   const foodScore = map(gameState.you.health, 0, 100, 3, -2);
   const snakeScore = -5;
-  const dangerousPositionScore = -3;
+  const dangerousPositionScore = -4;
 
   const move = moveDir(pos, direction);
   let positions = [move];
@@ -169,7 +169,7 @@ export const scoreDirection = (
       score += foodScore;
     }
     if (isOuterEdge(pos, gameState)) {
-      score += -2;
+      score += -3;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
@@ -177,7 +177,7 @@ export const scoreDirection = (
         { x: 0, y: 0 },
         { x: gameState.board.width - 1, y: gameState.board.height - 1 }
       );
-      const foodDistanceScore = map(foodDist, 0, maxDist, 4, 0);
+      const foodDistanceScore = map(foodDist, 0, maxDist, 3.5, 0);
       score += foodDistanceScore;
     }
     return score;
