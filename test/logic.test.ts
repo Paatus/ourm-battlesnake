@@ -93,7 +93,7 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 0 }, gameState)).toEqual(1);
+    expect(floodFill({ x: 0, y: 0 }, gameState)).toEqual(23);
   });
 
   it("calculates score correctly 2", () => {
@@ -105,7 +105,7 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 1 }, gameState)).toEqual(2);
+    expect(floodFill({ x: 0, y: 1 }, gameState)).toEqual(22);
   });
 
   it("calculates score correctly 3", () => {
@@ -117,7 +117,7 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 3 }, gameState)).toEqual(19);
+    expect(floodFill({ x: 0, y: 3 }, gameState)).toEqual(22);
   });
 });
 

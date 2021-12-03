@@ -1,3 +1,4 @@
+import { clamp, equals } from "ramda";
 import {
   InfoResponse,
   GameState,
@@ -124,34 +125,32 @@ export const floodFill = (pos: Coord, gameState: GameState): number => {
 };
 
 export const scoreDirection = (
-  pos: Coord,
+  head: Coord,
   direction: Direction,
   gameState: GameState
 ) => {
   const distanceLength = 2;
   const needsFood = gameState.you.health <= 20;
-  const foodScore = map(gameState.you.health, 0, 100, 3, -2);
+  const foodScore = map(gameState.you.health, 0, 100, 3, -3);
   const snakeScore = -5;
   const dangerousPositionScore = -4;
 
-  const move = moveDir(pos, direction);
+  const move = moveDir(head, direction);
   let positions = [move];
-  for (let w = 0; w < 1; w++) {
-    for (let l = 1; l <= distanceLength; l++) {
-      switch (direction) {
-        case "up":
-          positions.push({ x: move.x + w, y: move.y + l });
-          break;
-        case "down":
-          positions.push({ x: move.x + w, y: move.y - l });
-          break;
-        case "right":
-          positions.push({ x: move.x + l, y: move.y + w });
-          break;
-        case "left":
-          positions.push({ x: move.x - l, y: move.y + w });
-          break;
-      }
+  for (let l = 1; l <= distanceLength; l++) {
+    switch (direction) {
+      case "up":
+        positions.push({ x: move.x, y: move.y + l });
+        break;
+      case "down":
+        positions.push({ x: move.x, y: move.y - l });
+        break;
+      case "right":
+        positions.push({ x: move.x + l, y: move.y });
+        break;
+      case "left":
+        positions.push({ x: move.x - l, y: move.y });
+        break;
     }
   }
   const scores: number[] = positions.map((pos) => {
@@ -168,7 +167,8 @@ export const scoreDirection = (
     if (isFood) {
       score += foodScore;
     }
-    if (isOuterEdge(pos, gameState)) {
+    // Only if the edge is the next in that direction, apply negative score
+    if (isOuterEdge(pos, gameState) && equals(pos, move)) {
       score += -3;
     }
     if (needsFood) {
@@ -205,7 +205,6 @@ const getBestMove = (gameState: GameState): Direction => {
   // Step 0: Don't let your Battlesnake move back on it's own neck
   const me = gameState.you;
   const myHead = me.head;
-  const isHungry = me.health <= 100;
   switch (getSnakeDirection(me)) {
     case "up":
       possibleMoves = removeDown(possibleMoves);
@@ -242,32 +241,24 @@ const getBestMove = (gameState: GameState): Direction => {
     }
   });
 
-  // get position the move would place us at, if that is food, remove the direction, unless hungry
-  // possibleMoves.forEach((dir) => {
-  //   const posAfterMove = moveDir(myHead, dir);
-  //   if (
-  //     containsFood(posAfterMove, gameState) &&
-  //     !isHungry &&
-  //     possibleMoves.length > 1
-  //   ) {
-  //     possibleMoves = removeDirection(dir)(possibleMoves);
-  //   }
-  // });
-
   const scores = possibleMoves
     .map((dir) => {
       const score = scoreDirection(myHead, dir, gameState);
-      const floodFillScore = floodFill(moveDir(myHead, dir), gameState);
+      const floodFillScore = clamp(
+        0,
+        gameState.you.length,
+        floodFill(moveDir(myHead, dir), gameState)
+      );
+      const combinedScore = score + floodFillScore;
+      console.log(dir, { combinedScore, score });
       return {
         dir,
         score,
         floodFillScore,
-        combinedScore: score + floodFillScore,
+        combinedScore,
       };
     })
     .sort((a, b) => b.combinedScore - a.combinedScore);
-
-  console.log(scores);
 
   const bestScore = scores[0];
   const choices = scores
@@ -284,8 +275,6 @@ export function move(gameState: GameState): MoveResponse {
     move: bestMove,
   };
 
-  console.log(
-    `${gameState.game.id}:${gameState.you.id} MOVE ${gameState.turn}: ${response.move}`
-  );
+  console.log(`${gameState.game.id} MOVE ${gameState.turn}: ${response.move}`);
   return response;
 }

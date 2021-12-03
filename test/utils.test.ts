@@ -2,6 +2,7 @@ import { Battlesnake, Coord, Direction } from "../src/types";
 import {
   contains,
   getSnakeDirection,
+  map,
   moveDir,
   removeDirection,
   removeDown,
