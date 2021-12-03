@@ -39,11 +39,20 @@ export function end(gameState: GameState): void {
   console.log(`${gameState.game.id} END\n`);
 }
 
-const containsSnake = (pos: Coord, gameState: GameState): boolean => {
-  const dangerousSpots: Coord[] = gameState.board.snakes.flatMap((snake) =>
-    // remove tail from snakes body, as tail will be empty next turn
-    snake.body.slice(0, snake.length - 1)
-  );
+export const snakeTargets = (gameState: GameState): Coord[] => {
+  return gameState.board.snakes
+    .filter((snake) => snake.length < gameState.you.length)
+    .map((snake) => snake.head);
+};
+
+export const containsSnake = (pos: Coord, gameState: GameState): boolean => {
+  const worseSnekHeads = snakeTargets(gameState);
+  const dangerousSpots: Coord[] = gameState.board.snakes
+    .flatMap((snake) =>
+      // remove tail from snakes body, as tail will be empty next turn
+      snake.body.slice(0, snake.length - 1)
+    )
+    .filter((pos) => !contains(worseSnekHeads, pos));
   return !!dangerousSpots.find((c) => c.x === pos.x && c.y === pos.y);
 };
 
@@ -134,6 +143,7 @@ export const scoreDirection = (
   const foodScore = map(gameState.you.health, 0, 100, 3, -3);
   const snakeScore = -5;
   const dangerousPositionScore = -4;
+  const killScore = 5;
 
   const move = moveDir(head, direction);
   let positions = [move];
@@ -158,6 +168,11 @@ export const scoreDirection = (
     const isSnake = containsSnake(pos, gameState);
     const isDangerous = contains(getLikelyNextSnakePositions(gameState), pos);
     const isFood = containsFood(pos, gameState);
+    const isNextMove = equals(pos, move);
+    if (isNextMove && contains(snakeTargets(gameState), pos)) {
+      console.log("KEEEL!");
+      score += killScore;
+    }
     if (isSnake) {
       score += snakeScore;
     }
@@ -168,7 +183,7 @@ export const scoreDirection = (
       score += foodScore;
     }
     // Only if the edge is the next in that direction, apply negative score
-    if (isOuterEdge(pos, gameState) && equals(pos, move)) {
+    if (isNextMove && isOuterEdge(pos, gameState)) {
       score += -3;
     }
     if (needsFood) {

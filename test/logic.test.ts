@@ -1,4 +1,10 @@
-import { distanceToFood, floodFill, info, scoreDirection } from "../src/logic";
+import {
+  containsSnake,
+  distanceToFood,
+  floodFill,
+  info,
+  scoreDirection,
+} from "../src/logic";
 import { Battlesnake, Coord, GameState } from "../src/types";
 
 function createGameState(
@@ -160,5 +166,18 @@ describe("Scores", () => {
         expect(foodScore).toBeGreaterThan(nonFoodScore);
       }
     }
+  });
+});
+
+describe("containsSnake", () => {
+  it("works", () => {
+    const me = createBattlesnake("me", [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+    ]);
+    const worse = createBattlesnake("worse", [{ x: 0, y: 0 }]);
+    const gameState = createGameState(me, [], [me, worse]);
+
+    expect(containsSnake(worse.head, gameState)).toEqual(false);
   });
 });
