@@ -143,7 +143,7 @@ export const scoreDirection = (
   const foodScore = map(gameState.you.health, 0, 100, 3, -3);
   const snakeScore = -5;
   const dangerousPositionScore = -4;
-  const killScore = 5;
+  const killScore = 10;
 
   const move = moveDir(head, direction);
   let positions = [move];
@@ -166,10 +166,14 @@ export const scoreDirection = (
   const scores: number[] = positions.map((pos) => {
     let score = 0;
     const isSnake = containsSnake(pos, gameState);
-    const isDangerous = contains(getLikelyNextSnakePositions(gameState), pos);
+    const isDangerous = contains(
+      getDangerousSnakesNextPositions(gameState),
+      pos
+    );
+    const isKillable = contains(getWorseSnakesNextPositions(gameState), pos);
     const isFood = containsFood(pos, gameState);
     const isNextMove = equals(pos, move);
-    if (isNextMove && contains(snakeTargets(gameState), pos)) {
+    if (isNextMove && isKillable) {
       console.log("KEEEL!");
       score += killScore;
     }
@@ -200,10 +204,20 @@ export const scoreDirection = (
   return scores.reduce((acc, num) => acc + num, 0);
 };
 
-const getLikelyNextSnakePositions = (gameState: GameState): Coord[] => {
+const getWorseSnakesNextPositions = (gameState: GameState): Coord[] => {
+  const snakeHeads: Coord[] = snakeTargets(gameState);
+
+  const opportunityTiles: Coord[] = snakeHeads.flatMap((head) =>
+    getOpenNeighbours(head, [], gameState)
+  );
+  return opportunityTiles;
+};
+
+const getDangerousSnakesNextPositions = (gameState: GameState): Coord[] => {
   const snakeHeads: Coord[] = gameState.board.snakes
     .filter((snake) => snake.id !== gameState.you.id)
-    .flatMap((snake) => snake.head);
+    .flatMap((snake) => snake.head)
+    .filter((head) => !contains(snakeTargets(gameState), head));
 
   const dangerousTiles: Coord[] = snakeHeads.flatMap((head) =>
     getOpenNeighbours(head, [], gameState)
