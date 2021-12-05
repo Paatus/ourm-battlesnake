@@ -147,7 +147,7 @@ export const scoreDirection = (
 
   const move = moveDir(head, direction);
   let positions = [move];
-  for (let l = 1; l <= distanceLength; l++) {
+  for (let l = 1; l <= distanceLength - 1; l++) {
     switch (direction) {
       case "up":
         positions.push({ x: move.x, y: move.y + l });
