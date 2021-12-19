@@ -2,7 +2,10 @@ import {
   containsSnake,
   distanceToFood,
   floodFill,
+  getOpenNeighbours,
   info,
+  move,
+  outsideBoard,
   scoreDirection,
 } from "../src/logic";
 import { Battlesnake, Coord, GameState } from "../src/types";
@@ -36,8 +39,8 @@ function createGameState(
     },
     turn: 0,
     board: {
-      height: 5,
-      width: 5,
+      height: 11,
+      width: 11,
       food,
       snakes,
       hazards: [],
@@ -99,7 +102,9 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 0 }, gameState)).toEqual(23);
+    const calculatedScore =
+      gameState.board.width * gameState.board.height - me.length;
+    expect(floodFill({ x: 0, y: 0 }, gameState)).toEqual(calculatedScore);
   });
 
   it("calculates score correctly 2", () => {
@@ -111,7 +116,9 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 1 }, gameState)).toEqual(22);
+    const calculatedScore =
+      gameState.board.width * gameState.board.height - me.length;
+    expect(floodFill({ x: 0, y: 1 }, gameState)).toEqual(calculatedScore);
   });
 
   it("calculates score correctly 3", () => {
@@ -123,7 +130,9 @@ describe("Flood fill", () => {
     ]);
     const gameState = createGameState(me, [], [me]);
 
-    expect(floodFill({ x: 0, y: 3 }, gameState)).toEqual(22);
+    const calculatedScore =
+      gameState.board.width * gameState.board.height - me.length;
+    expect(floodFill({ x: 0, y: 3 }, gameState)).toEqual(calculatedScore);
   });
 });
 
@@ -170,14 +179,109 @@ describe("Scores", () => {
 });
 
 describe("containsSnake", () => {
-  it("works", () => {
+  it("excludes worse snakes", () => {
     const me = createBattlesnake("me", [
-      { x: 0, y: 0 },
+      { x: 4, y: 0 },
+      { x: 3, y: 0 },
+      { x: 2, y: 0 },
       { x: 1, y: 0 },
     ]);
-    const worse = createBattlesnake("worse", [{ x: 0, y: 0 }]);
+    const worse = createBattlesnake("worse", [
+      { x: 0, y: 3 },
+      { x: 0, y: 2 },
+      { x: 0, y: 1 },
+    ]);
     const gameState = createGameState(me, [], [me, worse]);
 
     expect(containsSnake(worse.head, gameState)).toEqual(false);
+    expect(containsSnake(worse.body[1], gameState)).toEqual(true);
+  });
+});
+
+describe("outsideBoard", () => {
+  const me = createBattlesnake("me", [{ x: 9, y: 9 }]);
+  const gs = createGameState(me, [], [me]);
+
+  it("returns true if outside board", () => {
+    expect(outsideBoard({ x: -1, y: 0 }, gs)).toEqual(true);
+  });
+
+  it("returns true if outside board", () => {
+    expect(outsideBoard({ x: 0, y: 0 }, gs)).toEqual(false);
+  });
+});
+
+describe("getOpenNeighbours", () => {
+  it("works", () => {
+    const me = createBattlesnake("me", [{ x: 9, y: 9 }]);
+    const gs = createGameState(me, [], [me]);
+    const result = getOpenNeighbours({ x: 1, y: 1 }, [], gs);
+    expect(result).toHaveLength(4);
+    expect(result).toContainEqual({ x: 0, y: 1 });
+    expect(result).toContainEqual({ x: 2, y: 1 });
+    expect(result).toContainEqual({ x: 1, y: 2 });
+    expect(result).toContainEqual({ x: 1, y: 0 });
+  });
+
+  it("filters known items", () => {
+    const me = createBattlesnake("me", [{ x: 9, y: 9 }]);
+    const gs = createGameState(me, [], [me]);
+    const result = getOpenNeighbours({ x: 1, y: 1 }, [{ x: 0, y: 1 }], gs);
+    expect(result).toHaveLength(3);
+    expect(result).not.toContainEqual({ x: 0, y: 1 });
+    expect(result).toContainEqual({ x: 2, y: 1 });
+    expect(result).toContainEqual({ x: 1, y: 2 });
+    expect(result).toContainEqual({ x: 1, y: 0 });
+  });
+});
+
+describe("Game tests", () => {
+  it("Grabs food even when full", () => {
+    const food = [{ x: 10, y: 7 }];
+    const me = createBattlesnake("me", [
+      { x: 9, y: 7 },
+      { x: 9, y: 6 },
+      { x: 9, y: 5 },
+      { x: 9, y: 4 },
+      { x: 9, y: 3 },
+      { x: 9, y: 2 },
+      { x: 9, y: 1 },
+      { x: 8, y: 1 },
+      { x: 7, y: 1 },
+      { x: 7, y: 2 },
+    ]);
+    const other = createBattlesnake("other", [
+      { x: 8, y: 8 },
+      { x: 7, y: 8 },
+      { x: 6, y: 8 },
+      { x: 5, y: 8 },
+      { x: 4, y: 8 },
+      { x: 3, y: 8 },
+      { x: 2, y: 8 },
+      { x: 1, y: 8 },
+      { x: 1, y: 9 },
+      { x: 2, y: 9 },
+      { x: 3, y: 9 },
+      { x: 4, y: 9 },
+      { x: 5, y: 9 },
+      { x: 6, y: 9 },
+      { x: 6, y: 10 },
+      { x: 5, y: 10 },
+      { x: 4, y: 10 },
+      { x: 3, y: 10 },
+      { x: 2, y: 10 },
+      { x: 1, y: 10 },
+      { x: 0, y: 10 },
+      { x: 0, y: 9 },
+      { x: 0, y: 8 },
+      { x: 0, y: 7 },
+      { x: 0, y: 6 },
+      { x: 0, y: 5 },
+      { x: 0, y: 4 },
+    ]);
+    const snakes = [me, other];
+    const gs = createGameState(me, food, snakes);
+
+    expect(move(gs)).toEqual({ move: "right" });
   });
 });

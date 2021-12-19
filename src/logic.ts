@@ -1,4 +1,4 @@
-import { clamp, equals } from "ramda";
+import { clamp, equals, tap } from "ramda";
 import {
   InfoResponse,
   GameState,
@@ -47,13 +47,13 @@ export const snakeTargets = (gameState: GameState): Coord[] => {
 
 export const containsSnake = (pos: Coord, gameState: GameState): boolean => {
   const worseSnekHeads = snakeTargets(gameState);
-  const dangerousSpots: Coord[] = gameState.board.snakes
+  const snakeCoords: Coord[] = gameState.board.snakes
     .flatMap((snake) =>
       // remove tail from snakes body, as tail will be empty next turn
-      snake.body.slice(0, snake.length - 1)
+      snake.body.slice(0, -1)
     )
     .filter((pos) => !contains(worseSnekHeads, pos));
-  return !!dangerousSpots.find((c) => c.x === pos.x && c.y === pos.y);
+  return contains(snakeCoords, pos);
 };
 
 const containsFood = (pos: Coord, gameState: GameState): boolean => {
@@ -61,7 +61,7 @@ const containsFood = (pos: Coord, gameState: GameState): boolean => {
   return !!food.find((c) => c.x === pos.x && c.y === pos.y);
 };
 
-const outsideBoard = (pos: Coord, gameState: GameState) => {
+export const outsideBoard = (pos: Coord, gameState: GameState) => {
   const width = gameState.board.width - 1;
   const height = gameState.board.height - 1;
   return pos.x < 0 || pos.x > width || pos.y < 0 || pos.y > height;
@@ -80,7 +80,7 @@ export const distanceToFood = (pos: Coord, gameState: GameState) => {
   }, Infinity);
 };
 
-const getOpenNeighbours = (
+export const getOpenNeighbours = (
   pos: Coord,
   visitedCoords: Coord[],
   gameState: GameState
@@ -96,7 +96,7 @@ const getOpenNeighbours = (
     .filter(
       (pos) => !outsideBoard(pos, gameState) && !containsSnake(pos, gameState)
     )
-    .filter((p) => !visitedCoords.find((vc) => vc.x === p.x && vc.y === p.y));
+    .filter((p) => !contains(visitedCoords, p));
 };
 
 const getFloodNeighbours = (
@@ -130,7 +130,7 @@ const getFloodNeighbours = (
 
 export const floodFill = (pos: Coord, gameState: GameState): number => {
   const allNeighbours = getFloodNeighbours(pos, [pos], gameState);
-  return allNeighbours.length + 1;
+  return allNeighbours.length;
 };
 
 export const scoreDirection = (
@@ -140,7 +140,7 @@ export const scoreDirection = (
 ) => {
   const distanceLength = 2;
   const needsFood = gameState.you.health <= 20;
-  const foodScore = map(gameState.you.health, 0, 100, 3, -3);
+  const foodScore = map(gameState.you.health, 0, 100, 3, -1);
   const snakeScore = -5;
   const dangerousPositionScore = -4;
   const killScore = 10;
@@ -174,7 +174,6 @@ export const scoreDirection = (
     const isFood = containsFood(pos, gameState);
     const isNextMove = equals(pos, move);
     if (isNextMove && isKillable) {
-      console.log("KEEEL!");
       score += killScore;
     }
     if (isSnake) {
@@ -188,7 +187,7 @@ export const scoreDirection = (
     }
     // Only if the edge is the next in that direction, apply negative score
     if (isNextMove && isOuterEdge(pos, gameState)) {
-      score += -3;
+      score += -1;
     }
     if (needsFood) {
       const foodDist = distanceToFood(pos, gameState);
