@@ -184,4 +184,17 @@ describe("Game tests", () => {
 
     expect(move(gs)).toEqual({ move: "right" });
   });
+
+  it.only('Don\'t move into hole', () => {
+      const me = createBattlesnake("me", [{"x":2,"y":0},{"x":2,"y":1},{"x":1,"y":1},{"x":1,"y":2}]);
+        const snakes = [
+            me,
+            createBattlesnake("red", [{"x":0,"y":2},{"x":0,"y":3},{"x":1,"y":3},{"x":2,"y":3},{"x":2,"y":4},{"x":2,"y":5},{"x":2,"y":6},{"x":2,"y":7}]),
+            createBattlesnake("green", [{"x":7,"y":3},{"x":6,"y":3},{"x":5,"y":3},{"x":4,"y":3},{"x":4,"y":2},{"x":4,"y":1},{"x":4,"y":0},{"x": 5, "y": 0}]),
+        ]
+      const gs = createGameState(me, [], snakes);
+
+      expect(move(gs)).toEqual({ move: "right" });
+
+  });
 });

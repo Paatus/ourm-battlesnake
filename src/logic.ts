@@ -236,7 +236,10 @@ const getBestMove = (gameState: GameState): Direction => {
       const score = scoreDirection(myHead, dir, gameState);
       const floodFillValue = floodFill(moveDir(myHead, dir), gameState, gameState.you.length);
       const floodFillScore = clamp(0, gameState.you.length, floodFillValue);
-      const combinedScore = score + floodFillScore;
+      let combinedScore = score + floodFillScore;
+      if(floodFillValue < gameState.you.length) {
+        combinedScore -= 5;
+      }
       console.log(dir, { combinedScore, score });
       return {
         dir,
