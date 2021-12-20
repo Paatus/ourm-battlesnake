@@ -56,3 +56,10 @@ export const isOuterEdge = (pos: Coord, gameState: GameState): boolean => {
     pos.y === gameState.board.height - 1
   );
 };
+
+export const outsideBoard = (pos: Coord, gameState: GameState) => {
+  const width = gameState.board.width - 1;
+  const height = gameState.board.height - 1;
+  return pos.x < 0 || pos.x > width || pos.y < 0 || pos.y > height;
+};
+

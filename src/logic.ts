@@ -1,4 +1,5 @@
-import { clamp, equals, tap } from "ramda";
+import { clamp, equals } from "ramda";
+import {floodFill} from "./flood-fill";
 import {
   InfoResponse,
   GameState,
@@ -12,6 +13,7 @@ import {
   isOuterEdge,
   map,
   moveDir,
+  outsideBoard,
   removeDirection,
   removeDown,
   removeLeft,
@@ -61,12 +63,6 @@ const containsFood = (pos: Coord, gameState: GameState): boolean => {
   return !!food.find((c) => c.x === pos.x && c.y === pos.y);
 };
 
-export const outsideBoard = (pos: Coord, gameState: GameState) => {
-  const width = gameState.board.width - 1;
-  const height = gameState.board.height - 1;
-  return pos.x < 0 || pos.x > width || pos.y < 0 || pos.y > height;
-};
-
 const distance = (pos1: Coord, pos2: Coord) => {
   return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
 };
@@ -82,8 +78,8 @@ export const distanceToFood = (pos: Coord, gameState: GameState) => {
 
 export const getOpenNeighbours = (
   pos: Coord,
-  visitedCoords: Coord[],
-  gameState: GameState
+  gameState: GameState,
+  visitedCoords: Coord[] = [],
 ): Coord[] => {
   const neighbours = [
     moveDir(pos, "up"),
@@ -93,44 +89,10 @@ export const getOpenNeighbours = (
   ];
 
   return neighbours
+    .filter((p) => !contains(visitedCoords, p))
     .filter(
       (pos) => !outsideBoard(pos, gameState) && !containsSnake(pos, gameState)
     )
-    .filter((p) => !contains(visitedCoords, p));
-};
-
-const getFloodNeighbours = (
-  pos: Coord,
-  visitedCoords: Coord[],
-  gameState: GameState
-): Coord[] => {
-  const directNeighbours = getOpenNeighbours(pos, visitedCoords, gameState);
-  let allNeighbours = [...directNeighbours];
-
-  for (const n of directNeighbours) {
-    allNeighbours = [
-      ...new Set([
-        ...allNeighbours,
-        ...getFloodNeighbours(
-          n,
-          [
-            ...new Set([
-              ...allNeighbours,
-              ...visitedCoords,
-              ...directNeighbours,
-            ]),
-          ],
-          gameState
-        ),
-      ]),
-    ];
-  }
-  return allNeighbours;
-};
-
-export const floodFill = (pos: Coord, gameState: GameState): number => {
-  const allNeighbours = getFloodNeighbours(pos, [pos], gameState);
-  return allNeighbours.length;
 };
 
 export const scoreDirection = (
@@ -207,7 +169,7 @@ const getWorseSnakesNextPositions = (gameState: GameState): Coord[] => {
   const snakeHeads: Coord[] = snakeTargets(gameState);
 
   const opportunityTiles: Coord[] = snakeHeads.flatMap((head) =>
-    getOpenNeighbours(head, [], gameState)
+    getOpenNeighbours(head, gameState)
   );
   return opportunityTiles;
 };
@@ -219,7 +181,7 @@ const getDangerousSnakesNextPositions = (gameState: GameState): Coord[] => {
     .filter((head) => !contains(snakeTargets(gameState), head));
 
   const dangerousTiles: Coord[] = snakeHeads.flatMap((head) =>
-    getOpenNeighbours(head, [], gameState)
+    getOpenNeighbours(head, gameState)
   );
   return dangerousTiles;
 };
@@ -272,11 +234,8 @@ const getBestMove = (gameState: GameState): Direction => {
   const scores = possibleMoves
     .map((dir) => {
       const score = scoreDirection(myHead, dir, gameState);
-      const floodFillScore = clamp(
-        0,
-        gameState.you.length,
-        floodFill(moveDir(myHead, dir), gameState)
-      );
+      const floodFillValue = floodFill(moveDir(myHead, dir), gameState, gameState.you.length);
+      const floodFillScore = clamp(0, gameState.you.length, floodFillValue);
       const combinedScore = score + floodFillScore;
       console.log(dir, { combinedScore, score });
       return {
