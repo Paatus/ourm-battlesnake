@@ -195,6 +195,17 @@ describe("Game tests", () => {
       const gs = createGameState(me, [], snakes);
 
       expect(move(gs)).toEqual({ move: "right" });
+  });
 
+  it('Can move to a tail, to avoid dangerous positions', () => {
+      const me = createBattlesnake("me", [{"x":8,"y":2},{"x":8,"y":1},{"x":9,"y":1},{"x":9,"y":2}]);
+        const snakes = [
+            me,
+            createBattlesnake("iSnek", [{"x":7,"y":3},{"x":7,"y":4},{"x":7,"y":5},{"x":7,"y":6},{"x":8,"y":6},{"x":9,"y":6},{"x":9,"y":7}]),
+            createBattlesnake("ramsay", [{"x":6,"y":2},{"x":6,"y":3},{"x":6,"y":4}]),
+        ]
+      const gs = createGameState(me, [], snakes);
+
+      expect(move(gs)).toEqual({ move: "right" });
   });
 });

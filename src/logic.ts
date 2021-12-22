@@ -105,7 +105,7 @@ export const scoreDirection = (
   const foodScore = map(gameState.you.health, 0, 100, 3, -1);
   const snakeScore = -5;
   const dangerousPositionScore = -4;
-  const killScore = 10;
+  const killScore = 2;
 
   const move = moveDir(head, direction);
   let positions = [move];
