@@ -185,7 +185,7 @@ describe("Game tests", () => {
     expect(move(gs)).toEqual({ move: "right" });
   });
 
-  it.only('Don\'t move into hole', () => {
+  it('Don\'t move into hole', () => {
       const me = createBattlesnake("me", [{"x":2,"y":0},{"x":2,"y":1},{"x":1,"y":1},{"x":1,"y":2}]);
         const snakes = [
             me,
