@@ -1,11 +1,12 @@
 import { clamp, equals } from "ramda";
-import {floodFill} from "./flood-fill";
+import { floodFill } from "./flood-fill";
 import {
   InfoResponse,
   GameState,
   MoveResponse,
   Coord,
   Direction,
+  Battlesnake,
 } from "./types";
 import {
   contains,
@@ -40,6 +41,12 @@ export function start(gameState: GameState): void {
 export function end(gameState: GameState): void {
   console.log(`${gameState.game.id} END\n`);
 }
+
+export const dangerSnakeHeads = (gameState: GameState): Coord[] => {
+  return gameState.board.snakes
+    .filter((snake) => snake.length >= gameState.you.length)
+    .map((snake) => snake.head);
+};
 
 export const snakeTargets = (gameState: GameState): Coord[] => {
   return gameState.board.snakes
@@ -79,7 +86,7 @@ export const distanceToFood = (pos: Coord, gameState: GameState) => {
 export const getOpenNeighbours = (
   pos: Coord,
   gameState: GameState,
-  visitedCoords: Coord[] = [],
+  visitedCoords: Coord[] = []
 ): Coord[] => {
   const neighbours = [
     moveDir(pos, "up"),
@@ -92,7 +99,18 @@ export const getOpenNeighbours = (
     .filter((p) => !contains(visitedCoords, p))
     .filter(
       (pos) => !outsideBoard(pos, gameState) && !containsSnake(pos, gameState)
-    )
+    );
+};
+
+const getExtraDangerousSpots = (gameState: GameState): Coord[] => {
+  const me = gameState.you;
+  const dangerousSnakes = gameState.board.snakes
+    .filter((snake) => snake.id !== me.id)
+    .filter((snake) => snake.length >= me.length);
+  return dangerousSnakes.map((snake) => {
+    const direction = getSnakeDirection(snake);
+    return moveDir(snake.head, direction);
+  });
 };
 
 export const scoreDirection = (
@@ -135,6 +153,7 @@ export const scoreDirection = (
     const isKillable = contains(getWorseSnakesNextPositions(gameState), pos);
     const isFood = containsFood(pos, gameState);
     const isNextMove = equals(pos, move);
+    const isExtraDangerous = contains(getExtraDangerousSpots(gameState), pos);
     if (isNextMove && isKillable) {
       score += killScore;
     }
@@ -143,6 +162,9 @@ export const scoreDirection = (
     }
     if (isDangerous) {
       score += dangerousPositionScore;
+    }
+    if (isExtraDangerous) {
+      score += dangerousPositionScore / 2;
     }
     if (isFood) {
       score += foodScore;
@@ -233,12 +255,16 @@ const getBestMove = (gameState: GameState): Direction => {
 
   const scores = possibleMoves
     .map((dir) => {
-        const unsafeFFScore = gameState.you.length * 1.5;
+      const unsafeFFScore = gameState.you.length * 1.5;
       const score = scoreDirection(myHead, dir, gameState);
-      const floodFillValue = floodFill(moveDir(myHead, dir), gameState, unsafeFFScore);
+      const floodFillValue = floodFill(
+        moveDir(myHead, dir),
+        gameState,
+        unsafeFFScore
+      );
       const floodFillScore = clamp(0, gameState.you.length, floodFillValue);
       let combinedScore = score + floodFillScore;
-      if(floodFillValue < unsafeFFScore) {
+      if (floodFillValue < unsafeFFScore) {
         combinedScore -= 5;
       }
       console.log(dir, { combinedScore, score });
