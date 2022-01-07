@@ -120,7 +120,8 @@ export const scoreDirection = (
 ) => {
   const distanceLength = 2;
   const needsFood = gameState.you.health <= 20;
-  const foodScore = map(gameState.you.health, 0, 100, 3, -1);
+  // const foodScore = map(gameState.you.health, 0, 100, 3, -1);
+  const foodScore = 1;
   const snakeScore = -5;
   const dangerousPositionScore = -4;
   const killScore = 2;

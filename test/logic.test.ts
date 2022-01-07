@@ -248,7 +248,7 @@ describe("Game tests", () => {
     expect(move(gs)).toEqual({ move: "right" });
   });
 
-  it.only("Thinks other snakes will go forward, rather than turn", () => {
+  it("Thinks other snakes will go forward, rather than turn", () => {
     const me = createBattlesnake("me", [
       { x: 5, y: 5 },
       { x: 5, y: 6 },
